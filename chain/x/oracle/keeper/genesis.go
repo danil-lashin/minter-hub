@@ -20,19 +20,10 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p            = k.GetParams(ctx)
-		attmap       = k.GetAttestationMapping(ctx)
-		attestations = []types.Attestation{}
+		p = k.GetParams(ctx)
 	)
 
-	// export attestations from state
-	for _, atts := range attmap {
-		// TODO: set height = 0?
-		attestations = append(attestations, atts...)
-	}
-
 	return types.GenesisState{
-		Params:       &p,
-		Attestations: attestations,
+		Params: &p,
 	}
 }
