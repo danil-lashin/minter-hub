@@ -3,6 +3,7 @@ package keeper
 import (
 	"github.com/MinterTeam/mhub/chain/x/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // InitGenesis starts a chain from a genesis state
@@ -41,10 +42,50 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p = k.GetParams(ctx)
+		p                     = k.GetParams(ctx)
+		batches               = k.GetOutgoingTxBatches(ctx)
+		valsets               = k.GetValsets(ctx)
+		attmap                = k.GetAttestationMapping(ctx)
+		vsconfs               = []*types.MsgValsetConfirm{}
+		batchconfs            = []types.MsgConfirmBatch{}
+		attestations          = []types.Attestation{}
+		orchestratorAddresses = []*types.MsgSetOrchestratorAddress{}
 	)
 
+	// export valset confirmations from state
+	for _, vs := range valsets {
+		// TODO: set height = 0?
+		vsconfs = append(vsconfs, k.GetValsetConfirms(ctx, vs.Nonce)...)
+	}
+
+	// export batch confirmations from state
+	for _, batch := range batches {
+		// TODO: set height = 0?
+		batchconfs = append(batchconfs, k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)...)
+	}
+
+	// export attestations from state
+	for _, atts := range attmap {
+		// TODO: set height = 0?
+		attestations = append(attestations, atts...)
+	}
+
+	k.StakingKeeper.IterateValidators(ctx, func(index int64, validator stakingtypes.ValidatorI) (stop bool) {
+		orchestratorAddresses = append(orchestratorAddresses, &types.MsgSetOrchestratorAddress{
+			Validator:    validator.GetOperator().String(),
+			Orchestrator: sdk.AccAddress(validator.GetOperator()).String(),
+			EthAddress:   k.GetEthAddress(ctx, validator.GetOperator()),
+		})
+		return false
+	})
+
 	return types.GenesisState{
-		Params: &p,
+		Params:                &p,
+		Valsets:               valsets,
+		ValsetConfirms:        vsconfs,
+		Batches:               batches,
+		BatchConfirms:         batchconfs,
+		Attestations:          attestations,
+		OrchestratorAddresses: orchestratorAddresses,
 	}
 }

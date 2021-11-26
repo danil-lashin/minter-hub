@@ -2,6 +2,7 @@ syntax = "proto3";
 package minter.v1;
 
 import "gogoproto/gogo.proto";
+import "minter/v1/msgs.proto";
 
 option go_package = "github.com/MinterTeam/mhub/chain/x/minter/types";
 
@@ -31,10 +32,12 @@ message Params {
                                                (gogoproto.nullable)   = false
                                                ];
   bool stopped                            = 11;
+
 }
 
 // GenesisState struct
 message GenesisState {
   Params params             = 1;
   uint64 start_minter_nonce = 2;
+  repeated MsgSetMinterAddress minter_addresses = 3;
 }

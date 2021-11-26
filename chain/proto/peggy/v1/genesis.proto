@@ -61,4 +61,5 @@ message GenesisState {
   repeated OutgoingTxBatch  batches         = 4;
   repeated MsgConfirmBatch  batch_confirms  = 5 [(gogoproto.nullable) = false];
   repeated Attestation      attestations    = 6 [(gogoproto.nullable) = false];
+  repeated MsgSetOrchestratorAddress orchestrator_addresses = 7;
 }
